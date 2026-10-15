@@ -1,0 +1,12 @@
+# Defaults for ros2 launch openbeam_bridge bridge.launch.py; override any with
+# `ros2 launch ... state_rate_hz:=30` or your own params file.
+openbeam_bridge:
+  ros__parameters:
+    backend: openbeam        # openbeam (a game over MCP) | fake (no game; a kinematic arm)
+    robot: ""                # which SO-101 actor ("" = the only one in the session)
+    state_rate_hz: 60.0      # /joint_states, /clock, /tf; capped by the game's frame rate
+    command_rate_hz: 60.0    # how often new targets are sent while a trajectory plays
+    camera_rate_hz: 2.0      # /camera/*; 0 disables. Each frame is a PNG screenshot.
+    camera_scale: 0.5        # image_raw downscale factor (the compressed topic keeps full size)
+    camera_fov_y_deg: 60.0   # for camera_info
+    goal_tolerance: 0.05     # rad, FollowJointTrajectory success

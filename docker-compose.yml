@@ -1,0 +1,71 @@
+# OpenBeam from ROS 2: the bridge plus a browser desktop with RViz.
+#
+#   docker compose up --build                      # bridge (game from .env) + desktop at http://localhost:6080
+#   OPENBEAM_BACKEND=fake docker compose up        # no game: a kinematic stand-in arm
+#   docker compose --profile demo up               # + the stock ros2_controllers trajectory publisher
+#
+# Connection settings come from .env (see .env.example): a local game's
+# endpoint file, or a cloud session id + access token.
+x-ros: &ros
+  image: openbeam/ros2-bridge:jazzy
+  environment:
+    ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+    RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+  entrypoint: ["/opt/openbeam_ws/entrypoint.sh"]
+
+services:
+  bridge:
+    <<: *ros
+    build:
+      context: .
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-tiryoh/ros2-desktop-vnc:jazzy}
+        ROS_DISTRO: ${ROS_DISTRO:-jazzy}
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      OPENBEAM_ENDPOINT_FILE: ${OPENBEAM_ENDPOINT_DIR:+/endpoint/${OPENBEAM_ENDPOINT_NAME:-agent-endpoint.json}}
+      OPENBEAM_ENDPOINT_HOST: ${OPENBEAM_ENDPOINT_HOST:-host.docker.internal}
+      OPENBEAM_SESSION_ID: ${OPENBEAM_SESSION_ID:-}
+      OPENBEAM_MCP_URL: ${OPENBEAM_MCP_URL:-}
+      OPENBEAM_MCP_TOKEN_FILE: ${OPENBEAM_MCP_TOKEN_FILE:+/secrets/token}
+      OPENBEAM_CLOUD_API_URL: ${OPENBEAM_CLOUD_API_URL:-https://cloud.openbeam.world}
+    volumes:
+      # The directory, not the file: the game rewrites the file (new port and
+      # token) on every start by renaming over it, which a file mount would miss.
+      - ${OPENBEAM_ENDPOINT_DIR:-./.endpoint}:/endpoint:ro
+      - ${OPENBEAM_MCP_TOKEN_FILE:-/dev/null}:/secrets/token:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: >
+      ros2 launch openbeam_bridge bridge.launch.py
+      backend:=${OPENBEAM_BACKEND:-openbeam}
+      robot:=${OPENBEAM_ROBOT:-""}
+      state_rate_hz:=${STATE_RATE_HZ:-60.0}
+      state_inflight:=${STATE_INFLIGHT:-1}
+      camera_rate_hz:=${CAMERA_RATE_HZ:-0.5}
+    restart: unless-stopped
+
+  desktop:
+    <<: *ros
+    # The course's image: an Ubuntu desktop in the browser. RViz starts by itself.
+    entrypoint: ["/bin/bash", "-c", "cp /opt/openbeam_ws/examples/rviz-autostart.desktop /etc/xdg/autostart/ && exec /entrypoint.sh"]
+    ports:
+      - "${DESKTOP_PORT:-6080}:80"
+    shm_size: 512m
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RESOLUTION: ${DESKTOP_RESOLUTION:-1600x900}
+    depends_on: [bridge]
+
+  demo:
+    <<: *ros
+    profiles: ["demo"]
+    # ros2_controllers' own example node, unchanged, pointed at the SO-101's joints.
+    command: >
+      ros2 run ros2_controllers_test_nodes publisher_joint_trajectory_controller
+      --ros-args --params-file /opt/openbeam_ws/examples/so101_trajectory_goals.yaml
+    depends_on: [bridge]

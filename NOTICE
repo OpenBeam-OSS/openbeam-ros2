@@ -1,0 +1,8 @@
+openbeam-ros2
+Copyright 2026 OpenBeam, LLC
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+src/openbeam_so101_description contains a URDF derived from TheRobotStudio
+SO-ARM100 (Apache-2.0); see src/openbeam_so101_description/NOTICE and
+LICENSE-SO-ARM100.

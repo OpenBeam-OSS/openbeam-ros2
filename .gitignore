@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.egg-info/
+build/
+install/
+log/
+.pytest_cache/
+src/openbeam_so101_description/meshes/*.stl

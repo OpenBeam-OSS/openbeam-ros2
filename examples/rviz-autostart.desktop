@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=RViz (OpenBeam SO-101)
+Exec=bash -lc "source /opt/ros/$ROS_DISTRO/setup.bash; source /opt/openbeam_ws/install/setup.bash; ros2 launch openbeam_so101_description display.launch.py rsp:=false"
+X-GNOME-Autostart-enabled=true

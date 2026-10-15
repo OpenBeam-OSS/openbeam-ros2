@@ -1,0 +1,9 @@
+openbeam_so101_description
+Copyright 2026 OpenBeam, LLC
+
+This package contains a URDF derived from, and fetches meshes from,
+TheRobotStudio SO-ARM100 (https://github.com/TheRobotStudio/SO-ARM100),
+commit a758567c3978dfeefe282ede0500085a48fe8f78, file
+Simulation/SO101/so101_new_calib.urdf and Simulation/SO101/assets/*.stl,
+licensed under the Apache License, Version 2.0 (LICENSE-SO-ARM100).
+Modification: mesh file paths rewritten to package:// URIs.
